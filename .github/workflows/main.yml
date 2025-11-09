@@ -11,7 +11,7 @@ on:
       - main
   workflow_dispatch:
 
-# Prevent multiple overlapping deployments
+# Prevent overlapping runs
 concurrency:
   group: "pages"
   cancel-in-progress: false
@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout the repository
+      # 1️⃣ Checkout repository
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -52,15 +52,13 @@ jobs:
 
       # 5️⃣ Build Flet web project
       - name: Flet Build Web
-        working-directory: ${{ github.workspace }}
         run: |
           echo "Repository: ${GITHUB_REPOSITORY}"
-          ls -al
           PROJECT_NAME=$(basename $GITHUB_REPOSITORY)
           echo "Building for project: $PROJECT_NAME"
           flutter config --no-analytics
-          # ✅ explicitly tell Flet where main.py is
-          flet build web --module-name main --base-url "/$PROJECT_NAME" --route-url-strategy hash
+          # ✅ specify app.py as entry point
+          flet build web --module-name app --base-url "/$PROJECT_NAME" --route-url-strategy hash
 
       # 6️⃣ Upload build artifact for deployment
       - name: Upload Artifact
