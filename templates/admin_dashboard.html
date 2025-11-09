@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block nav_items %}
+<li class="nav-item">
+    <a class="nav-link" href="/admin/dashboard">
+        <i class="fas fa-home me-1"></i>Dashboard
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="/admin/enroll">
+        <i class="fas fa-user-plus me-1"></i>Enroll Student
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="/admin/students">
+        <i class="fas fa-users me-1"></i>Students
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="/admin/logout">
+        <i class="fas fa-sign-out-alt me-1"></i>Logout
+    </a>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="container-fluid">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="text-white fw-bold">
+                    <i class="fas fa-tachometer-alt me-2"></i>Admin Dashboard
+                </h2>
+                <p class="text-white-50">Welcome back! Here's what's happening today.</p>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-value">{{ total_students }}</div>
+                    <div class="stat-label">Total Students</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                    <div class="stat-icon">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <div class="stat-value">{{ active_students }}</div>
+                    <div class="stat-label">Active Students</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row g-4 mb-4">
+            <div class="col-12">
+                <div class="dashboard-card">
+                    <h4 class="mb-4">
+                        <i class="fas fa-bolt text-warning me-2"></i>Quick Actions
+                    </h4>
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <a href="/admin/enroll" class="btn btn-admin w-100">
+                                <i class="fas fa-user-plus me-2"></i>Enroll New Student
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/admin/students" class="btn btn-attendance w-100">
+                                <i class="fas fa-users me-2"></i>View All Students
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-student w-100" onclick="downloadDailyReport()">
+                                <i class="fas fa-download me-2"></i>Daily Report
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#semesterReportModal">
+                                <i class="fas fa-file-excel me-2"></i>Semester Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="row">
+            <div class="col-12">
+                <div class="dashboard-card">
+                    <h4 class="mb-4">
+                        <i class="fas fa-history text-info me-2"></i>System Information
+                    </h4>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>System Status:</strong> All services are running normally.
+                    </div>
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <div class="p-3">
+                                <i class="fas fa-server fa-3x text-primary mb-2"></i>
+                                <h6>System Online</h6>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3">
+                                <i class="fas fa-shield-alt fa-3x text-success mb-2"></i>
+                                <h6>Security Active</h6>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3">
+                                <i class="fas fa-database fa-3x text-warning mb-2"></i>
+                                <h6>Data Backed Up</h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Semester Report Modal -->
+<div class="modal fade" id="semesterReportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-file-download me-2"></i>Download Semester Report
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Semester</label>
+                    <select class="form-control" id="semesterSelect">
+                        <option value="1st">1st Semester</option>
+                        <option value="2nd">2nd Semester</option>
+                        <option value="3rd">3rd Semester</option>
+                        <option value="4th">4th Semester</option>
+                        <option value="5th">5th Semester</option>
+                        <option value="6th">6th Semester</option>
+                        <option value="7th">7th Semester</option>
+                        <option value="8th">8th Semester</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Department</label>
+                    <input type="text" class="form-control" id="departmentInput" placeholder="e.g., CSE, EEE, ME">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-success" onclick="downloadSemesterReport()">
+                    <i class="fas fa-download me-2"></i>Download
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function downloadDailyReport() {
+    const today = new Date().toISOString().split('T')[0];
+    window.location.href = `/admin/download_attendance?type=daily&date=${today}`;
+    Swal.fire({
+        icon: 'success',
+        title: 'Downloading...',
+        text: 'Daily attendance report is being downloaded.',
+        timer: 2000,
+        showConfirmButton: false
+    });
+}
+
+function downloadSemesterReport() {
+    const semester = document.getElementById('semesterSelect').value;
+    const department = document.getElementById('departmentInput').value;
+    
+    if (!department) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Missing Information',
+            text: 'Please enter the department.'
+        });
+        return;
+    }
+    
+    window.location.href = `/admin/download_attendance?type=semester&semester=${semester}&department=${department}`;
+    
+    const modal = bootstrap.Modal.getInstance(document.getElementById('semesterReportModal'));
+    modal.hide();
+    
+    Swal.fire({
+        icon: 'success',
+        title: 'Downloading...',
+        text: 'Semester attendance report is being downloaded.',
+        timer: 2000,
+        showConfirmButton: false
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block title %}Mark Attendance{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-12 text-center">
+                <h2 class="text-white fw-bold">
+                    <i class="fas fa-camera me-2"></i>Face Recognition Attendance
+                </h2>
+                <p class="text-white-50">Position your face in the camera and capture</p>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="dashboard-card">
+                    <div class="video-container mb-4">
+                        <video id="video" autoplay playsinline></video>
+                        <canvas id="canvas" style="display:none;"></canvas>
+                        <div id="videoOverlay" class="video-overlay" style="display:none;">
+                            <div class="spinner-border text-white mb-3" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p>Initializing camera...</p>
+                        </div>
+                    </div>
+
+                    <div class="text-center mb-4">
+                        <button id="captureBtn" class="btn btn-attendance btn-lg px-5" disabled>
+                            <i class="fas fa-user-check me-2"></i>Capture & Mark Attendance
+                        </button>
+                    </div>
+
+                    <div id="resultCard" style="display:none;" class="mt-4">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="text-center">
+                                    <i id="resultIcon" class="fas fa-4x mb-3"></i>
+                                    <h4 id="resultTitle" class="fw-bold mb-3"></h4>
+                                    <div id="resultDetails"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <a href="/" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Home
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Instructions Card -->
+                <div class="dashboard-card mt-4">
+                    <h5 class="mb-3">
+                        <i class="fas fa-info-circle text-info me-2"></i>Instructions
+                    </h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Ensure good lighting for accurate recognition
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Look directly at the camera
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Remove glasses or face coverings if possible
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Keep your face centered in the frame
+                        </li>
+                        <li>
+                            <i class="fas fa-check text-success me-2"></i>
+                            Attendance can only be marked once per day
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let video = document.getElementById('video');
+let canvas = document.getElementById('canvas');
+let captureBtn = document.getElementById('captureBtn');
+let resultCard = document.getElementById('resultCard');
+let isProcessing = false;
+
+// Start camera
+navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => {
+        video.srcObject = stream;
+        document.getElementById('videoOverlay').style.display = 'none';
+        captureBtn.disabled = false;
+    })
+    .catch(err => {
+        Swal.fire({
+            icon: 'error',
+            title: 'Camera Error',
+            text: 'Unable to access camera. Please check permissions and try again.',
+            confirmButtonText: 'Go Back'
+        }).then(() => {
+            window.location.href = '/';
+        });
+    });
+
+captureBtn.addEventListener('click', async () => {
+    if (isProcessing) return;
+    
+    isProcessing = true;
+    captureBtn.disabled = true;
+    resultCard.style.display = 'none';
+    
+    // Capture image
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    
+    const imageData = canvas.toDataURL('image/jpeg');
+    
+    // Show loading
+    Swal.fire({
+        title: 'Processing...',
+        text: 'Recognizing your face, please wait',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    try {
+        const response = await fetch('/mark_attendance', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({image: imageData})
+        });
+        
+        const data = await response.json();
+        
+        Swal.close();
+        
+        if (data.success) {
+            // Success
+            document.getElementById('resultIcon').className = 'fas fa-check-circle fa-4x mb-3 text-success';
+            document.getElementById('resultTitle').textContent = 'Attendance Marked Successfully!';
+            document.getElementById('resultTitle').className = 'fw-bold mb-3 text-success';
+            document.getElementById('resultDetails').innerHTML = `
+                <div class="text-start">
+                    <p class="mb-2"><strong>Name:</strong> ${data.name}</p>
+                    <p class="mb-2"><strong>Student ID:</strong> ${data.student_id}</p>
+                    <p class="mb-2"><strong>Department:</strong> ${data.department}</p>
+                    <p class="mb-2"><strong>Semester:</strong> ${data.semester}</p>
+                    <p class="mb-0"><strong>Time:</strong> ${new Date().toLocaleTimeString()}</p>
+                </div>
+            `;
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: data.message,
+                confirmButtonText: 'OK'
+            });
+        } else {
+            // Failure
+            document.getElementById('resultIcon').className = 'fas fa-times-circle fa-4x mb-3 text-danger';
+            document.getElementById('resultTitle').textContent = 'Recognition Failed';
+            document.getElementById('resultTitle').className = 'fw-bold mb-3 text-danger';
+            document.getElementById('resultDetails').innerHTML = `
+                <p class="text-muted">${data.message}</p>
+                <p class="small">Please try again or contact administrator if the problem persists.</p>
+            `;
+            
+            Swal.fire({
+                icon: 'error',
+                title: 'Failed',
+                text: data.message
+            });
+        }
+        
+        resultCard.style.display = 'block';
+        
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'An error occurred while processing. Please try again.'
+        });
+    } finally {
+        isProcessing = false;
+        captureBtn.disabled = false;
+    }
+});
+
+// Auto-hide result after 10 seconds
+setInterval(() => {
+    if (resultCard.style.display === 'block') {
+        const displayTime = parseInt(resultCard.dataset.displayTime || '0');
+        if (displayTime > 10000) {
+            resultCard.style.display = 'none';
+            resultCard.dataset.displayTime = '0';
+        } else {
+            resultCard.dataset.displayTime = (displayTime + 1000).toString();
+        }
+    }
+}, 1000);
+</script>
+{% endblock %}

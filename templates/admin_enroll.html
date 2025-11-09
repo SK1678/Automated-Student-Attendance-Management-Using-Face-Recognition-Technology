@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}Enroll Student{% endblock %}
+
+{% block nav_items %}
+<li class="nav-item">
+    <a class="nav-link" href="/admin/dashboard">
+        <i class="fas fa-home me-1"></i>Dashboard
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link active" href="/admin/enroll">
+        <i class="fas fa-user-plus me-1"></i>Enroll Student
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="/admin/students">
+        <i class="fas fa-users me-1"></i>Students
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="/admin/logout">
+        <i class="fas fa-sign-out-alt me-1"></i>Logout
+    </a>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="text-white fw-bold">
+                    <i class="fas fa-user-plus me-2"></i>Enroll New Student
+                </h2>
+                <p class="text-white-50">Capture student photo and register details</p>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6 mb-4">
+                <div class="dashboard-card">
+                    <h5 class="mb-4">
+                        <i class="fas fa-camera text-primary me-2"></i>Capture Photo
+                    </h5>
+                    <div class="video-container mb-3">
+                        <video id="video" autoplay playsinline></video>
+                        <canvas id="canvas" style="display:none;"></canvas>
+                        <div id="videoOverlay" class="video-overlay" style="display:none;">
+                            <div class="spinner-border text-white mb-3" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p>Initializing camera...</p>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <button id="captureBtn" class="btn btn-attendance" disabled>
+                            <i class="fas fa-camera me-2"></i>Capture Photo
+                        </button>
+                        <button id="retakeBtn" class="btn btn-warning" style="display:none;">
+                            <i class="fas fa-redo me-2"></i>Retake
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="dashboard-card">
+                    <h5 class="mb-4">
+                        <i class="fas fa-user-edit text-success me-2"></i>Student Details
+                    </h5>
+                    <form id="enrollForm">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-id-card me-2"></i>Student ID
+                            </label>
+                            <input type="text" class="form-control" id="studentId" required 
+                                   placeholder="e.g., 2021-CS-001">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-user me-2"></i>Full Name
+                            </label>
+                            <input type="text" class="form-control" id="studentName" required 
+                                   placeholder="Enter full name">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-graduation-cap me-2"></i>Semester
+                            </label>
+                            <select class="form-control" id="semester" required>
+                                <option value="">Select Semester</option>
+                                <option value="1st">1st Semester</option>
+                                <option value="2nd">2nd Semester</option>
+                                <option value="3rd">3rd Semester</option>
+                                <option value="4th">4th Semester</option>
+                                <option value="5th">5th Semester</option>
+                                <option value="6th">6th Semester</option>
+                                <option value="7th">7th Semester</option>
+                                <option value="8th">8th Semester</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-building me-2"></i>Department
+                            </label>
+                            <input type="text" class="form-control" id="department" required 
+                                   placeholder="e.g., CSE, EEE, ME">
+                        </div>
+                        <button type="submit" class="btn btn-success w-100" id="submitBtn" disabled>
+                            <i class="fas fa-check-circle me-2"></i>Enroll Student
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let video = document.getElementById('video');
+let canvas = document.getElementById('canvas');
+let captureBtn = document.getElementById('captureBtn');
+let retakeBtn = document.getElementById('retakeBtn');
+let submitBtn = document.getElementById('submitBtn');
+let capturedImage = null;
+
+// Start camera
+navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => {
+        video.srcObject = stream;
+        document.getElementById('videoOverlay').style.display = 'none';
+        captureBtn.disabled = false;
+    })
+    .catch(err => {
+        Swal.fire({
+            icon: 'error',
+            title: 'Camera Error',
+            text: 'Unable to access camera. Please check permissions.'
+        });
+    });
+
+captureBtn.addEventListener('click', () => {
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    
+    capturedImage = canvas.toDataURL('image/jpeg');
+    
+    canvas.style.display = 'block';
+    video.style.display = 'none';
+    captureBtn.style.display = 'none';
+    retakeBtn.style.display = 'inline-block';
+    submitBtn.disabled = false;
+});
+
+retakeBtn.addEventListener('click', () => {
+    canvas.style.display = 'none';
+    video.style.display = 'block';
+    captureBtn.style.display = 'inline-block';
+    retakeBtn.style.display = 'none';
+    submitBtn.disabled = true;
+    capturedImage = null;
+});
+
+document.getElementById('enrollForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    if (!capturedImage) {
+        Swal.fire({
+            icon: 'error',
+            title: 'No Photo',
+            text: 'Please capture a photo first.'
+        });
+        return;
+    }
+    
+    const data = {
+        student_id: document.getElementById('studentId').value,
+        name: document.getElementById('studentName').value,
+        semester: document.getElementById('semester').value,
+        department: document.getElementById('department').value,
+        image: capturedImage
+    };
+    
+    Swal.fire({
+        title: 'Processing...',
+        text: 'Enrolling student, please wait',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    try {
+        const response = await fetch('/admin/enroll', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: result.message,
+                confirmButtonText: 'Enroll Another'
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Enrollment Failed',
+                text: result.message
+            });
+        }
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'An error occurred. Please try again.'
+        });
+    }
+});
+</script>
+{% endblock %}

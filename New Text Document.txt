@@ -1,0 +1,81 @@
+install python first.
+then open vs code
+in vs code terminal write: 
+Check python: python --version
+virtual environment creation: python -m venv ven
+Then activate virtual environment: venv\Scripts\activate
+if get error during it activation open windows PowerShell as admin then
+write: Get-ExecutionPolicy
+the output will be: Restricted
+then write: Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
+after that  in vs code terminal write: venv\Scripts\activate
+
+
+Step 1: See what’s overriding
+
+Run this in PowerShell (anywhere):
+
+Get-ExecutionPolicy -List
+
+
+You’ll see something like:
+
+        Scope ExecutionPolicy
+        ----- ---------------
+MachinePolicy       Undefined
+UserPolicy          Undefined
+Process             Bypass
+CurrentUser         RemoteSigned
+LocalMachine        AllSigned
+
+
+👉 The one at the top with a defined value (MachinePolicy or UserPolicy) is overriding everything else.
+
+🧩 Step 2: If MachinePolicy or UserPolicy shows something like “AllSigned” or “Restricted”
+
+That means a Group Policy is controlling it.
+If you’re on a work or school PC, this is often set by your IT admin — you’ll need admin rights to change it.
+
+If this is your own PC, we can fix it manually via the local policy editor 👇
+
+🧰 Step 3: Change execution policy via Local Group Policy Editor
+
+Press Win + R
+
+Type:
+
+gpedit.msc
+
+
+and press Enter (opens Local Group Policy Editor)
+
+Navigate to:
+
+Computer Configuration → Administrative Templates → Windows Components → Windows PowerShell
+
+
+On the right, double-click:
+“Turn on Script Execution”
+
+Set it to:
+
+✅ Enabled
+
+Then select Allow local scripts and remote signed scripts
+
+Click Apply → OK
+
+⚙️ Step 4: Close and reopen VS Code
+
+Then run in your VS Code terminal:
+
+venv\Scripts\activate
+
+
+You should now see:
+
+(venv) PS J:\face-recognition-attendance>
+
+
+🎉 Your virtual environment should finally activate!

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Student Login{% endblock %}
+
+{% block navbar %}{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+            <i class="fas fa-user-graduate fa-4x mb-3"></i>
+            <h2 class="fw-bold">Student Portal</h2>
+            <p class="mb-0">Access Your Attendance Records</p>
+        </div>
+        <div class="login-body">
+            <form id="loginForm">
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-id-card me-2"></i>Student ID
+                    </label>
+                    <input type="text" class="form-control" id="studentId" required 
+                           placeholder="Enter your student ID">
+                </div>
+                <button type="submit" class="btn btn-student w-100 mb-3">
+                    <i class="fas fa-sign-in-alt me-2"></i>Login
+                </button>
+                <div class="text-center">
+                    <a href="/" class="text-decoration-none">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Home
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const studentId = document.getElementById('studentId').value;
+    
+    try {
+        const response = await fetch('/student/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({student_id: studentId})
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Login Successful!',
+                text: 'Redirecting to your dashboard...',
+                timer: 1500,
+                showConfirmButton: false
+            }).then(() => {
+                window.location.href = '/student/dashboard';
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Login Failed',
+                text: data.message
+            });
+        }
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'An error occurred. Please try again.'
+        });
+    }
+});
+</script>
+{% endblock %}

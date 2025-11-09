@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard{% endblock %}
+
+{% block nav_items %}
+<li class="nav-item">
+    <a class="nav-link active" href="/student/dashboard">
+        <i class="fas fa-home me-1"></i>Dashboard
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="/student/logout">
+        <i class="fas fa-sign-out-alt me-1"></i>Logout
+    </a>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="container-fluid">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="text-white fw-bold">
+                    <i class="fas fa-user-graduate me-2"></i>Student Dashboard
+                </h2>
+                <p class="text-white-50">Welcome back, {{ student.name }}!</p>
+            </div>
+        </div>
+
+        <!-- Profile Card -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="dashboard-card text-center">
+                    <img src="{{ url_for('static', filename='student_images/' + student_id + '.jpg') }}" 
+                         alt="{{ student.name }}" 
+                         class="img-thumbnail rounded-circle mb-3" 
+                         style="width:150px; height:150px; object-fit:cover;">
+                    <h4 class="fw-bold">{{ student.name }}</h4>
+                    <p class="text-muted mb-2">
+                        <i class="fas fa-id-card me-2"></i>{{ student_id }}
+                    </p>
+                    <p class="text-muted mb-2">
+                        <i class="fas fa-building me-2"></i>{{ student.department }}
+                    </p>
+                    <p class="text-muted">
+                        <i class="fas fa-graduation-cap me-2"></i>{{ student.semester }}
+                    </p>
+                    <span class="badge bg-success fs-6">
+                        <i class="fas fa-check-circle me-1"></i>Active
+                    </span>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="row g-4">
+                    <!-- Today's Status -->
+                    <div class="col-md-6">
+                        <div class="stat-card" style="background: {{ 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)' if today_present else 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' }};">
+                            <div class="stat-icon">
+                                <i class="fas fa-{% if today_present %}check-circle{% else %}times-circle{% endif %}"></i>
+                            </div>
+                            <div class="stat-value">{{ 'Present' if today_present else 'Absent' }}</div>
+                            <div class="stat-label">Today's Status</div>
+                        </div>
+                    </div>
+
+                    <!-- Monthly Attendance -->
+                    <div class="col-md-6">
+                        <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                            <div class="stat-icon">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                            <div class="stat-value">{{ month_attendance }}</div>
+                            <div class="stat-label">This Month</div>
+                        </div>
+                    </div>
+
+                    <!-- Total Attendance -->
+                    <div class="col-md-12">
+                        <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <div class="stat-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="stat-value">{{ total_attendance }}</div>
+                            <div class="stat-label">Total Days Present</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Attendance -->
+        <div class="row">
+            <div class="col-12">
+                <div class="dashboard-card">
+                    <h4 class="mb-4">
+                        <i class="fas fa-history text-info me-2"></i>Recent Attendance
+                    </h4>
+                    
+                    {% if attendance_records %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th><i class="fas fa-calendar me-2"></i>Date</th>
+                                    <th><i class="fas fa-clock me-2"></i>Time</th>
+                                    <th><i class="fas fa-check-circle me-2"></i>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in attendance_records|reverse %}
+                                <tr>
+                                    <td><strong>{{ record.date }}</strong></td>
+                                    <td>{{ record.time }}</td>
+                                    <td>
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check me-1"></i>Present
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        No attendance records found yet.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="dashboard-card">
+                    <h5 class="mb-3">
+                        <i class="fas fa-bolt text-warning me-2"></i>Quick Actions
+                    </h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <a href="/attendance" class="btn btn-attendance w-100 btn-lg">
+                                <i class="fas fa-camera me-2"></i>Mark Today's Attendance
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <button class="btn btn-student w-100 btn-lg" onclick="viewCalendar()">
+                                <i class="fas fa-calendar-alt me-2"></i>View Attendance Calendar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function viewCalendar() {
+    Swal.fire({
+        icon: 'info',
+        title: 'Coming Soon',
+        text: 'Attendance calendar view is under development.'
+    });
+}
+</script>
+{% endblock %}
