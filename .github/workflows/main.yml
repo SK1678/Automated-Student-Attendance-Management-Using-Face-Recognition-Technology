@@ -11,7 +11,6 @@ on:
       - main
   workflow_dispatch:
 
-# Prevent overlapping runs
 concurrency:
   group: "pages"
   cancel-in-progress: false
@@ -27,40 +26,52 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout repository
+      # 1) Checkout repo
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2️⃣ Setup Python
+      # 2) (Fix) Bump OpenCV pin for Linux wheels if required
+      - name: Patch requirements.txt (OpenCV)
+        run: |
+          if [ -f requirements.txt ]; then
+            if grep -qE '^opencv-python==4\.8\.1\.78$' requirements.txt; then
+              echo "Patching opencv-python pin to 4.10.0.84..."
+              sed -i 's/^opencv-python==4\.8\.1\.78$/opencv-python==4.10.0.84/' requirements.txt
+            fi
+          fi
+          echo "Effective requirements.txt:"
+          [ -f requirements.txt ] && cat requirements.txt || echo "(no requirements.txt found)"
+
+      # 3) Setup Python
       - name: Setup Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v2
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      # 3️⃣ Install dependencies and Flet CLI
+      # 4) Install deps + Flet CLI
       - name: Install Python Dependencies and Flet
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install flet
 
-      # 4️⃣ Setup Flutter SDK
+      # 5) Setup Flutter
       - name: Setup Flutter ${{ env.FLUTTER_VERSION }}
         uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
 
-      # 5️⃣ Build Flet web project
+      # 6) Build Flet web (entry is app.py at repo root)
       - name: Flet Build Web
         run: |
           echo "Repository: ${GITHUB_REPOSITORY}"
-          PROJECT_NAME=$(basename $GITHUB_REPOSITORY)
+          PROJECT_NAME=$(basename "$GITHUB_REPOSITORY")
           echo "Building for project: $PROJECT_NAME"
           flutter config --no-analytics
-          # ✅ specify app.py as entry point
+          # app.py is your entry, so point Flet to module 'app'
           flet build web --module-name app --base-url "/$PROJECT_NAME" --route-url-strategy hash
 
-      # 6️⃣ Upload build artifact for deployment
+      # 7) Upload artifact for Pages
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3
         with:
@@ -80,11 +91,9 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      # 1️⃣ Configure GitHub Pages
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      # 2️⃣ Deploy to GitHub Pages 🚀
       - name: Deploy to GitHub Pages 🚀
         if: github.event_name == 'push'
         id: deployment
