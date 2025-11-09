@@ -18,60 +18,48 @@ concurrency:
 env:
   BUILD_NUMBER: 1
   BUILD_VERSION: 1.0.0
-  PYTHON_VERSION: 3.11.0
-  FLUTTER_VERSION: 3.22.2
+  PYTHON_VERSION: 3.11.9      # ✅ use 3.11 — compatible with older numpy
+  FLUTTER_VERSION: 3.16.9     # ✅ older flutter compatible with flet 0.27.x
+  FLET_VERSION: 0.27.3        # ✅ stable flet version with numpy 1.26 support
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # 1) Checkout repo
+      # 1️⃣ Checkout repository
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2) (Fix) Bump OpenCV pin for Linux wheels if required
-      - name: Patch requirements.txt (OpenCV)
-        run: |
-          if [ -f requirements.txt ]; then
-            if grep -qE '^opencv-python==4\.8\.1\.78$' requirements.txt; then
-              echo "Patching opencv-python pin to 4.10.0.84..."
-              sed -i 's/^opencv-python==4\.8\.1\.78$/opencv-python==4.10.0.84/' requirements.txt
-            fi
-          fi
-          echo "Effective requirements.txt:"
-          [ -f requirements.txt ] && cat requirements.txt || echo "(no requirements.txt found)"
-
-      # 3) Setup Python
+      # 2️⃣ Setup Python
       - name: Setup Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v2
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      # 4) Install deps + Flet CLI
+      # 3️⃣ Install dependencies and the pinned Flet CLI
       - name: Install Python Dependencies and Flet
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install flet
+          pip install flet==${{ env.FLET_VERSION }}
 
-      # 5) Setup Flutter
+      # 4️⃣ Setup older Flutter SDK
       - name: Setup Flutter ${{ env.FLUTTER_VERSION }}
         uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
 
-      # 6) Build Flet web (entry is app.py at repo root)
+      # 5️⃣ Build Flet web app (entry = app.py)
       - name: Flet Build Web
         run: |
           echo "Repository: ${GITHUB_REPOSITORY}"
-          PROJECT_NAME=$(basename "$GITHUB_REPOSITORY")
+          PROJECT_NAME=$(basename $GITHUB_REPOSITORY)
           echo "Building for project: $PROJECT_NAME"
           flutter config --no-analytics
-          # app.py is your entry, so point Flet to module 'app'
           flet build web --module-name app --base-url "/$PROJECT_NAME" --route-url-strategy hash
 
-      # 7) Upload artifact for Pages
+      # 6️⃣ Upload artifact for deployment
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3
         with:
